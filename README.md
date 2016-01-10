@@ -6,7 +6,7 @@
 ######This pdf was used for understanding and implementing the encryption algorithm.http://www.cs.ucsb.edu/~koc/ns/docs/slides/03-des.pdf
 
 
-##### Java_Client_Server_Application
+####2.Reliable UDP Datagram Transfer using RC4 Encryption Algorithm
 A distributed networking application in Java consisting of a transmitter and a receiver that can ensure reliable data transfer and cryptographic authentication
 
 #####The Following rules were used to write the program
