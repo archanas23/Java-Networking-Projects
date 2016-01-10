@@ -1,0 +1,286 @@
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.math.BigInteger;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketTimeoutException;
+import java.nio.ByteBuffer;
+import java.util.*;
+
+public class  Gh{
+  
+ int k=0;
+ private int[] S = new int[256];
+   private int[] T = new int[256];
+   private int keylen;
+
+
+ public Gh(byte[] key) throws Exception {
+     if (key.length < 1 || key.length > 256) {
+       throw new Exception("key must be between 1 and 256 bytes");
+     } else {
+       keylen = key.length;
+       for (int i = 0; i < 256; i++) {
+         S[i] = i;
+         T[i] = key[i % keylen];
+       }
+       int j = 0;
+       for (int i = 0; i < 256; i++) {
+         j = (((j + S[i] + T[i]) % 256+256))%256; 
+         S[i] ^= S[j];
+         S[j] ^= S[i];
+         S[i] ^= S[j];
+       }
+     }
+   }
+
+   public byte[] encrypt(byte[] plaintext) {
+     byte[] ciphertext = new byte[plaintext.length];
+     byte[] deciphertext = new byte[plaintext.length];
+     int i = 0, j = 0, t;
+     for (int counter = 0; counter < plaintext.length; counter++) {
+       i = (i + 1) % 256;
+       j = (j + S[i]) % 256;
+       S[i] ^= S[j];
+       S[j] ^= S[i];
+       S[i] ^= S[j];
+       t = (S[i] + S[j]) % 256;
+       k = S[t];
+       byte ki = (byte)k;
+       ciphertext[counter] = (byte) (plaintext[counter] ^ ki);
+       deciphertext[counter] = (byte) (ciphertext[counter] ^ ki);        
+          } 
+         return ciphertext;
+     }
+   
+    public static void main(String[] args) throws Exception {
+       Random randomno = new Random();
+       int x = 0;
+      int y = 0;
+      byte[] keyd = new byte[16];
+      do
+     {
+       randomno.nextBytes(keyd);
+       x = 0;
+       y = 0;
+       for (byte bo : keyd)
+       {
+          int val = bo;
+          for (int i = 0; i < 8; i++)
+          {
+            if((val & 128) == 0)
+            {
+            x++;
+            val <<= 1;
+            }
+            else
+            {
+             y++;
+             val <<= 1;
+            } 
+             
+          }
+       }
+     }while(x != y);
+       Gh rc4 = new Gh(keyd);
+       byte[] payload = new byte[10];
+       randomno.nextBytes(payload);
+       System.out.println("The sent Data is:");
+       System.out.println(Arrays.toString(payload));
+       System.out.println("\n");
+          byte[] bytes1 = new byte[4];
+          randomno.nextBytes(bytes1);
+          ByteArrayOutputStream outputStream3 = new ByteArrayOutputStream( );
+          outputStream3.write(bytes1);
+          outputStream3.write(keyd);
+          byte sendData0[] = outputStream3.toByteArray( );
+          InetAddress ip3 = InetAddress.getByName("LocalHost");
+          DatagramSocket clientSocket = new DatagramSocket();
+          DatagramPacket sendPacket0 = new DatagramPacket(sendData0, sendData0.length, ip3, 9999);
+          clientSocket.send(sendPacket0);
+       int te = 0;
+       int j = 0;
+       int ab = 0;
+       byte[] packtype = new byte[1];
+       int len = payload.length;
+       int abs = len%30;
+       if(abs == 0)
+       {
+        j = len/30;
+       }
+       else
+       {
+        j = (len/30)+1;
+       }
+       for(int u = 0; u < j; u++ )
+       {
+           int trial = 0;
+        if((abs != 0) && (u == j-1))
+        {
+         ab = len-te;
+            packtype[0] = (byte)170;
+        }
+        else
+        {
+         ab = 30;
+            packtype[0] = (byte)85;
+        }
+        byte[] temp = new byte[ab];
+     byte[] sendData = new byte[10+ab];
+     byte[] receiveData = new byte[9];
+           for(int i=te;i<(te+ab);i++)
+           {
+            temp[i-te]=payload[i];
+           }
+           te=te+ab;
+           byte length = (byte)ab;
+           ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+           outputStream.write(packtype);
+           outputStream.write(bytes1);
+           outputStream.write(length);
+           outputStream.write(temp);
+           byte senData[] = outputStream.toByteArray( );
+           byte[] keydd = rc4.encrypt(senData); //encryption 
+           System.out.println(Arrays.toString(keydd));
+         int po = keydd.length;
+         int gl; 
+         gl=(po%4);
+         byte[] tem = new byte[gl];
+         ByteArrayOutputStream outputStream1 = new ByteArrayOutputStream( );
+         outputStream1.write(keydd);
+      outputStream1.write(tem);
+     byte key[] = outputStream1.toByteArray( ); 
+         int jk = key.length;
+     byte[] key1 = new byte[jk/4];
+     byte[] key2 = new byte[jk/4];
+     byte[] key3 = new byte[jk/4];
+     byte[] key4 = new byte[jk/4];
+     int go1=0;
+     int go2=1;
+     int go3=2;
+     int go4=3;
+     int come=0;
+     while((come<(jk/4)))
+     {
+      key1[come]=key[go1];
+      go1=go1+4;
+      come++;
+     }
+     come=0;
+     while((come<(jk/4)))
+     {
+      key2[come]=key[go2];
+      go2=go2+4;
+      come++;
+     }
+     come=0;
+     while((come<(jk/4)))
+     {
+      key3[come]=key[go3];
+      go3=go3+4;
+      come++;
+     }
+     come=0;
+     while((come<(jk/4)))
+     {
+      key4[come]=key[go4];
+      go4=go4+4;
+      come++;
+     }
+     byte[] intchk = new byte[4];
+     for ( int i = 0; i < (jk/4); i++) {          
+              intchk[0]=(byte) (key1[i]^intchk[0]);
+              intchk[1]=(byte) (key2[i]^intchk[1]);
+              intchk[2]=(byte) (key3[i]^intchk[2]);
+              intchk[3]=(byte) (key4[i]^intchk[3]);
+              
+          }
+          int intchkre= (intchk[0]<<24)&0xff000000| (intchk[1]<<16)&0x00ff0000|(intchk[2]<< 8)&0x0000ff00| (intchk[3]<< 0)&0x000000ff;
+         int number1= (bytes1[0]<<24)&0xff000000| (bytes1[1]<<16)&0x00ff0000|(bytes1[2]<< 8)&0x0000ff00| (bytes1[3]<< 0)&0x000000ff;
+         int sum = number1 + (10+ab);
+         bytes1 = BigInteger.valueOf(sum).toByteArray();
+         ByteArrayOutputStream outputStream2 = new ByteArrayOutputStream( );
+         outputStream2.write(senData);
+         outputStream2.write(intchk);
+         byte senData1[] = outputStream2.toByteArray( );
+         sendData = senData1;
+         System.out.println(Arrays.toString(sendData));
+         byte[] k1 = new byte[1];
+         k1[0] = sendData[0];
+         DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+         DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, ip3, 9000);
+         try{
+             sendData[0] = sendData[1];
+             System.out.println(Arrays.toString(intchk));
+            clientSocket.send(sendPacket);
+            clientSocket.setSoTimeout(1000); 
+            clientSocket.receive(receivePacket);
+         }catch(SocketTimeoutException ex)
+            {
+             System.out.println("1st Timeout occured!!!!!");
+             try{             System.out.println(Arrays.toString(intchk));
+                 clientSocket.send(sendPacket);
+                 System.out.println(Arrays.toString(sendData));
+                 clientSocket.setSoTimeout(2000);
+                 clientSocket.receive(receivePacket);
+             }catch(SocketTimeoutException ex1)
+             {System.out.println("2nd Timeout occured!!!!!");
+             System.out.println(Arrays.toString(intchk));
+             sendData[0] = k1[0];
+             try{clientSocket.send(sendPacket);
+             System.out.println(Arrays.toString(sendData));
+                 clientSocket.setSoTimeout(4000);
+                 clientSocket.receive(receivePacket);
+             }catch(SocketTimeoutException ex2)
+             {System.out.println("3rd Timeout occured!!!!!");
+             try{
+                 System.out.println(Arrays.toString(intchk));
+             clientSocket.send(sendPacket);
+             clientSocket.setSoTimeout(8000);
+             clientSocket.receive(receivePacket);
+             }catch(SocketTimeoutException ex3)
+             {
+                 System.out.println("last Timeout occured!!!!!");
+                 break;
+             }
+             }
+             }
+            }
+            byte[] a = new byte[9];
+            a = receivePacket.getData();
+            byte[] pak = new byte[4];
+            for(int q = 0; q < 4; q++)
+            {
+             pak[q] = a[q+1];
+            }
+            byte[] pak1 = new byte[4];
+            for(int q = 0; q < 4; q++)
+            {
+             pak1[q] = a[q+5];
+            }
+            int intchkre1= (pak1[0]<<24)&0xff000000| (pak1[1]<<16)&0x00ff0000|(pak1[2]<< 8)&0x0000ff00| (pak1[3]<< 0)&0x000000ff;
+            int sum1= (pak[0]<<24)&0xff000000| (pak[1]<<16)&0x00ff0000|(pak[2]<< 8)&0x0000ff00| (pak[3]<< 0)&0x000000ff;
+            if((sum1 == sum) && (intchkre1 == intchkre))
+            {
+              System.out.printf("%d packet sent Correctly!!!\n", (u+1));
+             }
+            else
+            {
+                while(((sum1 != sum) || (intchkre1 != intchkre)) && (trial != 4))
+                {
+                    trial++;
+                    System.out.println("Error!!!");
+                    try{
+                        clientSocket.send(sendPacket);
+                        clientSocket.setSoTimeout(2000);
+                        clientSocket.receive(receivePacket);
+                    }catch(SocketTimeoutException exp)
+                    {System.out.println(exp);}
+                    
+                }
+            }
+       }clientSocket.close(); 
+    }
+  }
